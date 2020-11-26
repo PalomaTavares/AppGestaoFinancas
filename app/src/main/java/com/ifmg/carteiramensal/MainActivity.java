@@ -1,5 +1,5 @@
 package com.ifmg.carteiramensal;
-//Paloma e Rebeka
+//Paloma Tavares e Rebeka Góes
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.Bundle;

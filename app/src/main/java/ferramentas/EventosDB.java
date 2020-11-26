@@ -1,5 +1,5 @@
 package ferramentas;
-//Paloma e Rebeka
+//Paloma Tavares e Rebeka Góes
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
