@@ -2,6 +2,7 @@ package com.ifmg.carteiramensal;
 //Paloma Tavares e Rebeka Góes
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.TextureView;
 import android.view.View;
@@ -77,10 +78,31 @@ public class MainActivity extends AppCompatActivity {
         novoBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                EventosDB db = new EventosDB(MainActivity.this);
-                db.insereEvento();
+                //EventosDB db = new EventosDB(MainActivity.this);
+                //db.insereEvento();
 
-                Toast.makeText(MainActivity.this, db.getDatabaseName(), Toast.LENGTH_LONG).show();
+                //Toast.makeText(MainActivity.this, db.getDatabaseName(), Toast.LENGTH_LONG).show();
+            }
+        });
+        entradaBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent trocaAct = new Intent(MainActivity.this, VisualizarEventos.class);
+
+                trocaAct.putExtra("acao", 0);
+
+                startActivity(trocaAct);
+            }
+        });
+        saidaBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent trocaAct = new Intent(MainActivity.this, VisualizarEventos.class);
+
+                trocaAct.putExtra("acao", 1);
+
+                //pedimos para visualizar a ativity passada como parametro
+                startActivity(trocaAct);
             }
         });
     }

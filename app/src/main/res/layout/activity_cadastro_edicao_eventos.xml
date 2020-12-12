@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".CadastroEdicaoEventos">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tituloCadastroTxt"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Título"
+                android:textSize="30sp"
+                android:layout_gravity="center"
+                android:layout_marginTop="30dp"
+                android:layout_marginBottom="10dp"/>
+
+            <!--Informacao do nome-->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginLeft="15dp"
+                android:layout_marginRight="15dp"
+                android:layout_marginBottom="10dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Nome:"
+                    android:textSize="22sp"/>
+
+                <EditText
+                    android:id="@+id/nomeCadastroTxt"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="22sp"/>
+
+            </LinearLayout>
+
+            <!--Informacao valor-->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_gravity="center"
+                android:layout_marginBottom="10dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Valor: R$"
+                    android:textSize="22sp"/>
+
+                <EditText
+                    android:id="@+id/valorCadastroTxt"
+                    android:layout_width="170dp"
+                    android:layout_height="wrap_content"
+                    android:inputType="numberDecimal"/>
+
+            </LinearLayout>
+
+            <!--Informacao da data do evento-->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_gravity="center"
+                android:layout_marginBottom="10dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Data do evento:"
+                    android:textSize="22sp"
+                    android:layout_marginRight="5dp"/>
+
+                <TextView
+                    android:id="@+id/dataCadastroTxt"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="01/01/2018"
+                    android:textSize="22sp"/>
+
+            </LinearLayout>
+
+
+            <!-- Informacao de repeticao-->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_gravity="center"
+                android:layout_marginBottom="10dp">
+
+                <CheckBox
+                    android:id="@+id/repeteBtn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="repete?"
+                    android:textSize="22sp"/>
+
+                <Spinner
+                    android:id="@+id/mesesSpinner"
+                    android:layout_width="70dp"
+                    android:layout_height="match_parent"
+                    android:textSize="22sp"/>
+
+            </LinearLayout>
+
+
+            <ImageView
+                android:id="@+id/fotoCadastro"
+                android:layout_width="180dp"
+                android:layout_height="180dp"
+                android:background="@mipmap/fotos"
+                android:layout_gravity="center"
+                android:layout_marginBottom="10dp"/>
+
+            <Button
+                android:id="@+id/fotoBtn"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Foto"
+                android:layout_gravity="center"
+                android:layout_marginBottom="10dp"/>
+
+
+            <!---Botoes de acao-->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginLeft="15dp"
+                android:layout_marginRight="15dp">
+
+
+                <Button
+                    android:id="@+id/salvarCadastroBtn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Salvar"
+                    android:layout_weight="1"
+                    android:layout_marginRight="5dp"/>
+
+                <Button
+                    android:id="@+id/cancelarCadastroBtn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Cancelar"
+                    android:layout_weight="1"
+                    android:layout_marginLeft="5dp"/>
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </ScrollView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
