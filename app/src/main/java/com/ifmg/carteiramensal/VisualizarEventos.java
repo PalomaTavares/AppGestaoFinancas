@@ -6,11 +6,18 @@ import android.app.DatePickerDialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.Adapter;
 import android.widget.Button;
 import android.widget.DatePicker;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import java.util.ArrayList;
+import java.util.Date;
+
+import ferramentas.EventosDB;
+import modelo.Evento;
 
 public class VisualizarEventos extends AppCompatActivity {
 
@@ -20,6 +27,10 @@ public class VisualizarEventos extends AppCompatActivity {
     private TextView totalTxt;
     private Button novoBtn;
     private Button cancelarBtn;
+
+    private ArrayList<Evento> eventos;
+    private ItemListaEventos adapter;
+
 // operacao = 0 indica entrada    operacao = 1 indica saida
     private int operacao = -1;
 
@@ -40,6 +51,8 @@ public class VisualizarEventos extends AppCompatActivity {
 
         ajusteOperacao();
         cadastrarEventos();
+        cadastrarEventos();
+        carregaEventosLista();
     }
 
 
@@ -76,9 +89,29 @@ public class VisualizarEventos extends AppCompatActivity {
                 Toast.makeText(VisualizarEventos.this, "erro no parâmetro acao", Toast.LENGTH_LONG).show();
             }
         }
-
-
-
     }
+    private void carregaEventosLista(){
+        eventos = new ArrayList<>();
+
+        //aqui ocorre a busca dos eventos no banco de dados
+        //eventos.add(new Evento("Padaria", 10.60, new Date(),new Date(), new Date(), null));
+        //eventos.add(new Evento("Surpermercado", 358.70, new Date(),new Date(), new Date(), null));
+
+        EventosDB db = new EventosDB(VisualizarEventos.this);
+
+        eventos = db.buscaEventos(operacao, MainActivity.dataAPP);
+
+        adapter = new ItemListaEventos(getApplicationContext(), eventos);
+        listaEventos.setAdapter(adapter);
+
+        //somamos todos os valores para apresentar no total
+        double total = 0.0;
+        for(int i = 0; i < eventos.size(); i++){
+            total += eventos.get(i).getValor();
+        }
+        totalTxt.setText(total + "");
+    }
+
+
 
 }

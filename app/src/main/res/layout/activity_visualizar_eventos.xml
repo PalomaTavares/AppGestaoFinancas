@@ -18,7 +18,7 @@
             android:layout_height="wrap_content"
             android:text="Título"
             android:layout_gravity="center"
-            android:layout_marginTop="35dp"
+            android:layout_marginTop="15dp"
             android:layout_marginBottom="15dp"
             android:textSize="32dp"/>
         
@@ -29,7 +29,9 @@
             android:layout_marginLeft="15dp"
             android:layout_marginRight="15dp"
             android:layout_marginBottom="15dp"
-            android:layout_weight="1"/>
+            android:layout_weight="1"
+            android:padding="10dp"
+            android:background="@drawable/bordalista"/>
 
         <!--representa o total de eventos da lista -->
         <LinearLayout
