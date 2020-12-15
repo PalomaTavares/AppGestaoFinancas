@@ -19,7 +19,7 @@
             android:layout_height="wrap_content"
             android:text="Mes/Ano"
             android:layout_gravity="center"
-            android:textSize="32dp"
+            android:textSize="28dp"
             android:layout_marginTop="40dp"
             android:layout_marginBottom="70dp"/>
 
@@ -34,11 +34,11 @@
             <!--adicionando botao de cadastro de entrada-->
             <ImageButton
                 android:id="@+id/entradaBtn"
-                android:layout_width="75dp"
-                android:layout_height="75dp"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
                 android:background="@mipmap/soma"
                 android:layout_gravity="center"
-                android:layout_marginRight="20dp"/>
+                android:layout_marginRight="10dp"/>
             <!--Bloco lógico para organizar os textView-->
             <LinearLayout
                 android:layout_width="wrap_content"
@@ -55,13 +55,13 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Entradas: RS"
-                        android:textSize="21dp"/>
+                        android:textSize="17dp"/>
                     <TextView
                         android:id="@+id/entradaTxt"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="0,00"
-                        android:textSize="21dp"
+                        android:textSize="17dp"
                         android:layout_marginLeft="4dp"/>
                 </LinearLayout>
                 <!--informações da saida-->
@@ -75,13 +75,13 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="Saídas: R$"
-                            android:textSize="21dp"/>
+                            android:textSize="17dp"/>
                         <TextView
                             android:id="@+id/saidaTxt"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="0,00"
-                            android:textSize="21dp"
+                            android:textSize="17dp"
                             android:layout_marginLeft="4dp"/>
 
                 </LinearLayout>
@@ -96,24 +96,24 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Saldo: R$"
-                        android:textSize="21dp"/>
+                        android:textSize="17dp"/>
                     <TextView
                         android:id="@+id/saldoTxt"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="0,00"
-                        android:textSize="21dp"
+                        android:textSize="17dp"
                         android:layout_marginLeft="4dp"/>
                 </LinearLayout>
                 </LinearLayout>
             //adicionando botao de cadastro de saida
             <ImageButton
                 android:id="@+id/saidaBtn"
-                android:layout_width="70dp"
-                android:layout_height="70dp"
+                android:layout_width="53dp"
+                android:layout_height="53dp"
                 android:background="@mipmap/sub"
                 android:layout_gravity="center"
-                android:layout_marginLeft="20dp"/>
+                android:layout_marginLeft="10dp"/>
         </LinearLayout>
         <LinearLayout
             android:layout_width="match_parent"

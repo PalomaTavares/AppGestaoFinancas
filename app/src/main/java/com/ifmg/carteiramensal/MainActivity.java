@@ -11,9 +11,11 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.util.ArrayList;
 import java.util.Calendar;
 
 import ferramentas.EventosDB;
+import modelo.Evento;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -39,7 +41,7 @@ public class MainActivity extends AppCompatActivity {
         titulo = (TextView) findViewById(R.id.tituloMain);
         entrada = (TextView) findViewById(R.id.entradaTxt);
         saida = (TextView) findViewById(R.id.saidaTxt);
-        saldo = (TextView) findViewById(R.id.saidaTxt);
+        saldo = (TextView) findViewById(R.id.saldoTxt);
 
         entradaBtn = (ImageButton) findViewById(R.id.entradaBtn);
         saidaBtn = (ImageButton) findViewById(R.id.saidaBtn);
@@ -59,6 +61,7 @@ public class MainActivity extends AppCompatActivity {
         //responsavel por implementar todos os eventos de botoes
 
         mostraDataApp();
+        atualizaValores();
     }
 
     private void cadastroEventos(){
@@ -91,7 +94,7 @@ public class MainActivity extends AppCompatActivity {
 
                 trocaAct.putExtra("acao", 0);
 
-                startActivity(trocaAct);
+                startActivityForResult(trocaAct, 0);
             }
         });
         saidaBtn.setOnClickListener(new View.OnClickListener() {
@@ -102,7 +105,7 @@ public class MainActivity extends AppCompatActivity {
                 trocaAct.putExtra("acao", 1);
 
                 //pedimos para visualizar a ativity passada como parametro
-                startActivity(trocaAct);
+                startActivityForResult(trocaAct,1);
             }
         });
     }
@@ -118,6 +121,7 @@ public class MainActivity extends AppCompatActivity {
 
     }
     private void atualizaMes(int ajuste){
+        dataAPP.add(Calendar.MONTH, ajuste);
          //proximo mes (nao pode passar do mes atual)
         if(ajuste > 0){
             if(dataAPP.after(hoje)){
@@ -127,11 +131,45 @@ public class MainActivity extends AppCompatActivity {
             //aqui temos que realizar uma busca de dados (avaliar se existem meses anteriores cadastrados
 
         }
-        dataAPP.add(Calendar.MONTH, ajuste);
+       // dataAPP.add(Calendar.MONTH, ajuste);
 
 
         // aqui temos que realizar uma busca no banco de dados(avaliar se existem meses anteriores cadastrados)
         mostraDataApp();
+        atualizaValores();
     }
 
+    private void atualizaValores(){
+
+        // buscando entradas e saidas cadastradas para este mes no banco de dados
+        EventosDB db = new EventosDB( MainActivity.this);
+
+        ArrayList<Evento> saidasLista = db.buscaEventos(1, dataAPP);
+        ArrayList<Evento> entradasLista = db.buscaEventos(0, dataAPP);
+
+        //somando todos os valors dos eventos recuperados em banco
+        double entradaTotal = 0.0;
+        double saidaTotal = 0.0;
+        double saldoTotal = 0.0;
+
+        for(int i = 0; i < entradasLista.size(); i++){
+            entradaTotal += entradasLista.get(i).getValor();
+        }
+
+        for(int i = 0; i < saidasLista.size(); i++){
+            saidaTotal += saidasLista.get(i).getValor();
+        }
+
+        //mostrando os valores para o usuario
+        saldoTotal = entradaTotal - saidaTotal;
+
+        entrada.setText(String.format("%.2f",entradaTotal));
+        saida.setText(String.format("%.2f",saidaTotal ));
+        saldo.setText(String.format("%.2f", saldoTotal ));
+    }
+    protected void  onActivityResult(int codigoRequest, int codigoResultado, Intent data){
+        super.onActivityResult(codigoRequest, codigoResultado, data);
+
+        atualizaValores();
+    }
 }

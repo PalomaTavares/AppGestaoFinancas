@@ -14,7 +14,9 @@ import java.util.Date;
 import modelo.Evento;
 
 public class EventosDB extends SQLiteOpenHelper {
+
     private Context contexto;
+
     public EventosDB(Context cont){
         super(cont, "evento", null, 1);
         contexto = cont;
@@ -45,16 +47,18 @@ public class EventosDB extends SQLiteOpenHelper {
 
             db.insert("evento", null, valores);
 
-        }catch(SQLiteException ex){
+        }catch(SecurityException ex){
 
             ex.printStackTrace();
         }
 
-
-
-
     }
     public void atualizaEvento(){
+        try (SQLiteDatabase db = this.getWritableDatabase()) {
+
+        } catch (SecurityException ex) {
+
+        }
 
     }
     public ArrayList<Evento> buscaEventos(int op, Calendar data){
@@ -65,23 +69,31 @@ public class EventosDB extends SQLiteOpenHelper {
         Calendar dia1 = Calendar.getInstance();
         dia1.setTime(data.getTime());
         dia1.set(Calendar.DAY_OF_MONTH,1);
+        dia1.set(Calendar.HOUR, -12);
+        dia1.set(Calendar.MINUTE, 0);
+        dia1.set(Calendar.SECOND, 0);
 
-        //ultimo dia do mes
+        //ultimo dia do mes (ultimos segundos)
         Calendar dia2 = Calendar.getInstance();
         dia2.setTime(data.getTime());
         dia2.set(Calendar.DAY_OF_MONTH, dia2.getActualMaximum(Calendar.DAY_OF_MONTH));
+        dia2.set(Calendar.HOUR, 11);
+        dia2.set(Calendar.MINUTE, 59);
+        dia2.set(Calendar.SECOND, 59);
+        dia2.set(Calendar.MILLISECOND, 999);
 
-        String sql = "SELECT * FROM evento WHERE dataocorreu <= " + dia2.getTime().getTime() +
-                " AND dataocorreu >= "+dia1.getTime().getTime();
+        String sql = "SELECT * FROM evento WHERE ((datavalida <= " + dia2.getTime().getTime() +
+                " AND datavalida >= "+dia1.getTime().getTime() + ") OR (dataocorreu <=" + dia2.getTime().getTime() +
+          " AND datavalida >= " +dia1.getTime().getTime() + "))";
 
         sql += " AND valor ";
 
         if(op == 0){
             //entradas
-            sql += ">=0";
+            sql += " >= 0";
         }else{
             //saidas (indicada por valor negativo)
-            sql += "<=0";
+            sql += " < 0 ";
         }
         try(SQLiteDatabase db = this.getWritableDatabase()) {
 
@@ -89,20 +101,19 @@ public class EventosDB extends SQLiteOpenHelper {
 
             //efetuar a leitura das tupla
             if(tuplas.moveToFirst()){
-
                 do{
                     long id = tuplas.getInt(0);
                     String nome = tuplas.getString(1);
                     double valor = tuplas.getDouble(2);
                     if(valor < 0){
-                        valor += -1;
+                        valor *= -1;
                     }
                     String urlFoto = tuplas.getString(3);
                     Date dataocorreu = new Date(tuplas.getLong(4));
                     Date datacadastro = new Date(tuplas.getLong(5));
                     Date datavalida = new Date(tuplas.getLong(6));
 
-                    Evento temporario = new Evento((long) id, nome, valor, dataocorreu, datacadastro, datavalida, urlFoto);
+                    Evento temporario = new Evento((long) id, nome, valor, datacadastro, datavalida ,dataocorreu, urlFoto);
                     resultado.add(temporario);
 
                 }while(tuplas.moveToNext());

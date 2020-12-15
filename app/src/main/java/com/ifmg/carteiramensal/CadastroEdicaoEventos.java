@@ -21,17 +21,17 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.List;
+
 
 import ferramentas.EventosDB;
 import modelo.Evento;
 
 public class CadastroEdicaoEventos extends AppCompatActivity {
-    private DatePickerDialog calendarioUsuario;
+
 
     private TextView tituloTxt;
-    private EditText nomeTxt;
-    private EditText valorTxt;
+    private TextView nomeTxt;
+    private TextView valorTxt;
     private TextView dataTxt;
     private CheckBox repeteBtn;
     private ImageView foto;
@@ -39,6 +39,7 @@ public class CadastroEdicaoEventos extends AppCompatActivity {
     private Button salvarBtn;
     private Button cancelarBtn;
     private Calendar calendarioTemp;
+    private DatePickerDialog calendarioUsuario;
     private Spinner mesesRepeteSpi;
 
 
@@ -63,6 +64,10 @@ public class CadastroEdicaoEventos extends AppCompatActivity {
         cancelarBtn = (Button) findViewById(R.id.cancelarCadastroBtn);
         mesesRepeteSpi = (Spinner) findViewById(R.id.mesesSpinner);
 
+        Calendar hoje = Calendar.getInstance();
+        SimpleDateFormat formatador = new SimpleDateFormat("dd/MM/yyyy");
+        dataTxt.setText(formatador.format(hoje.getTime()));
+
         Intent intencao = getIntent();
          acao = intencao.getIntExtra("acao", -1);
 
@@ -71,16 +76,17 @@ public class CadastroEdicaoEventos extends AppCompatActivity {
          confSpinners();
     }
     private void confSpinners(){
-        List<String> meses = new ArrayList<>();
+        ArrayList<String> meses = new ArrayList<>();
 
         // vamos permitir nesta versão a repeticao de apenas 24 meses de um evento
         for(int i = 0; i <= 24; i++){
-            meses.add(i+"");
+            meses.add(i + "");
         }
         ArrayAdapter<String> listaAdapter = new ArrayAdapter<String>(this,
                 R.layout.support_simple_spinner_dropdown_item,
                 meses);
         mesesRepeteSpi.setAdapter(listaAdapter);
+        mesesRepeteSpi.setEnabled(false);
     }
 
     private void cadastraEventos(){
@@ -106,20 +112,34 @@ public class CadastroEdicaoEventos extends AppCompatActivity {
         salvarBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                cadastrarNoEvento();
+                cadastrarNovoEvento();
             }
         });
+
+        //tratando a repeticao do evento
+        repeteBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if(repeteBtn.isChecked()){
+                    mesesRepeteSpi.setEnabled(true);
+                }else{
+                    mesesRepeteSpi.setEnabled(false);
+                }
+            }
+        });
+
+        cancelarBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                //termina a execução de uma activity e retorna a anterior
+                finish();
+            }
+        });
+
     }
 
 //metodo auxilia na reutilizacao da activity, altera os valores dos componentes reutilizaveis
     private  void ajustaPorAcao(){
-
-        //recuperando a data de hoje
-        Calendar hoje = Calendar.getInstance();
-
-        SimpleDateFormat formatador = new SimpleDateFormat("dd/MM/yyyy");
-        dataTxt.setText(formatador.format(hoje.getTime()));
-
         switch (acao){
             case 0:{
                 tituloTxt.setText("Cadast. Entrada");
@@ -140,7 +160,7 @@ public class CadastroEdicaoEventos extends AppCompatActivity {
             }
         }
     }
-    private void cadastrarNoEvento(){
+    private void cadastrarNovoEvento(){
 
         String nome = nomeTxt.getText().toString();
         double valor = Double.parseDouble(valorTxt.getText().toString());
@@ -149,23 +169,27 @@ public class CadastroEdicaoEventos extends AppCompatActivity {
             valor *= -1;
         }
 
-        SimpleDateFormat formatador = new SimpleDateFormat("dd/MM/yyyy");
+        //SimpleDateFormat formatador = new SimpleDateFormat("dd/MM/yyyy");
 
-        String dataStr = dataTxt.getText().toString();
+       // String dataStr = dataTxt.getText().toString();
 
-        try {
-            Date diaEvento = formatador.parse(dataStr);
+       // try {
+            Date diaEvento = calendarioTemp.getTime();
 
             // um novo calendario para calcular data limite(repeticao)
             Calendar dataLimite = Calendar.getInstance();
             dataLimite.setTime(calendarioTemp.getTime());
+        dataLimite.set(Calendar.DAY_OF_MONTH, dataLimite.getActualMaximum(Calendar.DAY_OF_MONTH));
 
             //verificando se este evento ira repetir por alguns meses
             if(repeteBtn.isChecked()){
-                //por enquanto esmos considerando apenas 1 mes
+              String mesStr = (String)mesesRepeteSpi.getSelectedItem();
+
+              dataLimite.add(Calendar.MONTH, Integer.parseInt(mesStr));
+
             }
             //setando para o ultimo dia do mes limite
-            dataLimite.set(Calendar.DAY_OF_MONTH, dataLimite.getActualMaximum(Calendar.DAY_OF_MONTH));
+            //dataLimite.set(Calendar.DAY_OF_MONTH, dataLimite.getActualMaximum(Calendar.DAY_OF_MONTH));
 
             Evento novoEvento = new Evento (nome, valor, new Date(), dataLimite.getTime(), diaEvento, null);
 
@@ -177,9 +201,9 @@ public class CadastroEdicaoEventos extends AppCompatActivity {
 
             finish();
 
-        }catch (ParseException ex){
-            System.err.println("erro no formato da data");
-        }
+        //}catch (ParseException ex){
+          //  System.err.println("erro no formato da data");
+        //}
 
     }
 

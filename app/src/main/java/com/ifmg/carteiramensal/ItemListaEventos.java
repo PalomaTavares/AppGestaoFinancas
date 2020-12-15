@@ -31,7 +31,7 @@ public class ItemListaEventos extends ArrayAdapter<Evento> {
     }
 
     public ItemListaEventos(Context contexto, ArrayList<Evento> dados){
-        super(contexto, R.layout.item_lista_eventos);
+        super(contexto, R.layout.item_lista_eventos, dados);
 
         this.contextoPai = contexto;
         this.eventos = dados;
@@ -70,11 +70,11 @@ public class ItemListaEventos extends ArrayAdapter<Evento> {
             resultado = convertView;
         }
 
-        //vamos setar os valores de cada campo
-
+        //seta os valores de cada campo
         novaView.nomeTxt.setText(eventoAtual.getNome());
-        novaView.valorTxt.setText(eventoAtual.getValor()+"");
+        novaView.valorTxt.setText(eventoAtual.getValor()+  "");
         novaView.fotoTxt.setText(eventoAtual.getCaminhoFoto() == null ? "Não" : "Sim");
+
         SimpleDateFormat formataData = new SimpleDateFormat("dd/MM/yyyy");
         novaView.dataTxt.setText(formataData.format(eventoAtual.getOcorreu()));
 

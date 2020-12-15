@@ -31,7 +31,7 @@ public class VisualizarEventos extends AppCompatActivity {
     private ArrayList<Evento> eventos;
     private ItemListaEventos adapter;
 
-// operacao = 0 indica entrada    operacao = 1 indica saida
+    // operacao = 0 indica entrada    operacao = 1 indica saida
     private int operacao = -1;
 
     @Override
@@ -62,16 +62,24 @@ public class VisualizarEventos extends AppCompatActivity {
             public void onClick(View view) {
                 if(operacao != -1){
 
-                 Intent trocaAct = new Intent(VisualizarEventos.this, CadastroEdicaoEventos.class);
+                    Intent trocaAct = new Intent(VisualizarEventos.this, CadastroEdicaoEventos.class);
 
-                 if (operacao == 0){
-                     trocaAct.putExtra("acao", 0);
-                 }else{
-                     trocaAct.putExtra("acao", 1);
-                 }
+                    if (operacao == 0){
+                        trocaAct.putExtra("acao", 0);
+                        startActivityForResult(trocaAct, 0);
+                    }else{
+                        trocaAct.putExtra("acao", 1);
+                        startActivityForResult(trocaAct, 1);
+                    }
 
-                    startActivity(trocaAct);
                 }
+            }
+        });
+
+        cancelarBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                finish();
             }
         });
     }
@@ -91,11 +99,19 @@ public class VisualizarEventos extends AppCompatActivity {
         }
     }
     private void carregaEventosLista(){
+
         eventos = new ArrayList<>();
 
+        // Busca no banco de dados
+        /*eventos.add(new Evento("Padaria", 10.50, new Date(), new Date(), new Date(), null));
+
+        adapter = new ItemListaEventos(getApplicationContext(), eventos);
+        listaEventos.setAdapter(adapter);
+
+
         //aqui ocorre a busca dos eventos no banco de dados
-        //eventos.add(new Evento("Padaria", 10.60, new Date(),new Date(), new Date(), null));
-        //eventos.add(new Evento("Surpermercado", 358.70, new Date(),new Date(), new Date(), null));
+        eventos.add(new Evento("Padaria", 10.60, new Date(),new Date(), new Date(), null));
+        eventos.add(new Evento("Surpermercado", 358.70, new Date(),new Date(), new Date(), null));*/
 
         EventosDB db = new EventosDB(VisualizarEventos.this);
 
@@ -104,14 +120,22 @@ public class VisualizarEventos extends AppCompatActivity {
         adapter = new ItemListaEventos(getApplicationContext(), eventos);
         listaEventos.setAdapter(adapter);
 
+
         //somamos todos os valores para apresentar no total
         double total = 0.0;
+
         for(int i = 0; i < eventos.size(); i++){
             total += eventos.get(i).getValor();
         }
-        totalTxt.setText(total + "");
+        totalTxt.setText(String.format("%.2f",total ));
     }
 
+    protected void onActivityResult(int codigoRequest, int codigoResultado, Intent data){
+        super.onActivityResult(codigoRequest, codigoResultado, data);
+
+       carregaEventosLista();
+
+    }
 
 
 }
