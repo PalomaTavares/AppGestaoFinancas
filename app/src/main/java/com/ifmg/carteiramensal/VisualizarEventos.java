@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Adapter;
+import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.DatePicker;
 import android.widget.ListView;
@@ -102,25 +103,33 @@ public class VisualizarEventos extends AppCompatActivity {
 
         eventos = new ArrayList<>();
 
-        // Busca no banco de dados
-        /*eventos.add(new Evento("Padaria", 10.50, new Date(), new Date(), new Date(), null));
-
-        adapter = new ItemListaEventos(getApplicationContext(), eventos);
-        listaEventos.setAdapter(adapter);
-
 
         //aqui ocorre a busca dos eventos no banco de dados
-        eventos.add(new Evento("Padaria", 10.60, new Date(),new Date(), new Date(), null));
-        eventos.add(new Evento("Surpermercado", 358.70, new Date(),new Date(), new Date(), null));*/
-
         EventosDB db = new EventosDB(VisualizarEventos.this);
-
         eventos = db.buscaEventos(operacao, MainActivity.dataAPP);
 
         adapter = new ItemListaEventos(getApplicationContext(), eventos);
         listaEventos.setAdapter(adapter);
 
+        listaEventos.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int indice, long id) {
+                Evento eventoSelecionado = eventos.get(indice);
 
+                Intent novoFluxo = new Intent(VisualizarEventos.this, CadastroEdicaoEventos.class);
+
+                if (operacao == 0){
+                    novoFluxo.putExtra("acao", 2);
+                }else{
+                    //editando um evento da saida
+                    novoFluxo.putExtra("acao", 3);
+                }
+
+                novoFluxo.putExtra("id", eventoSelecionado.getId()+"");
+
+                startActivityForResult(novoFluxo, operacao);
+            }
+        });
         //somamos todos os valores para apresentar no total
         double total = 0.0;
 

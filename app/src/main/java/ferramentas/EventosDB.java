@@ -53,14 +53,60 @@ public class EventosDB extends SQLiteOpenHelper {
         }
 
     }
-    public void atualizaEvento(){
+    public void updateEvento(Evento eventoAtualiazdo){
         try (SQLiteDatabase db = this.getWritableDatabase()) {
 
-        } catch (SecurityException ex) {
+            ContentValues valores = new ContentValues();
+            valores.put("nome", eventoAtualiazdo.getNome());
+            valores.put("valor", eventoAtualiazdo.getValor());
+            valores.put("imagem", eventoAtualiazdo.getCaminhoFoto());
+            valores.put("dataocorreu", eventoAtualiazdo.getOcorreu().getTime());
+            valores.put("datavalida", eventoAtualiazdo.getValida().getTime());
 
+            db.update("evento", valores, "id = ?", new String[]{eventoAtualiazdo.getId()+""});
+        } catch (SecurityException ex) {
+            System.err.println("erro na atualização do evento");
+            ex.printStackTrace();
         }
 
     }
+
+    public Evento buscaEventoId (int idEvento){
+        String sql = "SELECT * FROM evento WHERE id = "+idEvento;
+
+        Evento resultado = null;
+
+        try(SQLiteDatabase db = this.getWritableDatabase()) {
+
+            //executando a sql
+            Cursor tupla = db.rawQuery(sql, null);
+
+            //extraindo as informacoes do evento
+            if(tupla.moveToFirst()){
+
+                String nome = tupla.getString(1);
+                double valor = tupla.getDouble(2);
+                if(valor < 0){
+                    valor *= -1;
+                }
+                String urlFoto = tupla.getString(3);
+                Date dataocorreu = new Date(tupla.getLong(4));
+                Date datacadastro = new Date(tupla.getLong(5));
+                Date datavalida = new Date(tupla.getLong(6));
+
+                resultado = new Evento(idEvento, nome, valor, datacadastro, datavalida, dataocorreu, urlFoto);
+
+            }
+
+        }catch (SQLiteException ex){
+            //mensagem de erro para debug
+            System.err.println("Erro na consulta SQL da busca de veto por id");
+            ex.printStackTrace();
+        }
+        return resultado;
+
+    }
+
     public ArrayList<Evento> buscaEventos(int op, Calendar data){
 
         ArrayList<Evento> resultado = new ArrayList<>();

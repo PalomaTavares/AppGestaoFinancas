@@ -45,6 +45,7 @@ public class CadastroEdicaoEventos extends AppCompatActivity {
 
     //0 = cadastro entrada 1 = cadastro saida 2 = edicao entrada 3 = edicao saida
     private int acao = -1;
+    private Evento eventoSelecionado;
 
 
 
@@ -112,7 +113,13 @@ public class CadastroEdicaoEventos extends AppCompatActivity {
         salvarBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                cadastrarNovoEvento();
+                if(acao < 2){
+                    cadastrarNovoEvento();
+                }else{
+                    //update do evento
+                    updateEvento();
+                }
+
             }
         });
 
@@ -131,8 +138,16 @@ public class CadastroEdicaoEventos extends AppCompatActivity {
         cancelarBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                //termina a execução de uma activity e retorna a anterior
-                finish();
+                if(acao < 2){
+                    //termina a execução de uma activity e retorna a anterior
+                    finish();
+                }else{
+                    //aqui sera chamado o metodo de delete no bd
+                    EventosDB db = new EventosDB(CadastroEdicaoEventos.this);
+                    //db.excluirEventoId(eventoSelecionado.getId());
+                    finish();
+                }
+
             }
         });
 
@@ -150,16 +165,87 @@ public class CadastroEdicaoEventos extends AppCompatActivity {
             case 2:{
                 //edicao de entradas
                 tituloTxt.setText("Edição. Entrada");
+                ajusteEdicao();
             }break;
             case 3: {
                 //dedicao de saidas
                 tituloTxt.setText("Edição. Saída");
+                ajusteEdicao();
             }break;
             default:{
 
             }
         }
     }
+
+    private void ajusteEdicao(){
+        cancelarBtn.setText("Excluir");
+        salvarBtn.setText("Atualizar");
+
+        //carregando a informação do banco de dados
+        int id = Integer.parseInt(getIntent().getStringExtra("id"));
+
+        if(id != 0){
+            EventosDB db = new EventosDB(CadastroEdicaoEventos.this);
+            eventoSelecionado = db.buscaEventoId(id);
+
+            //carregar as informacoes do campos recuperados do banco
+            SimpleDateFormat formatar = new SimpleDateFormat("dd/MM/yyyy");
+
+            nomeTxt.setText(eventoSelecionado.getNome());
+            valorTxt.setText(eventoSelecionado.getValor()+"");
+            dataTxt.setText(formatar.format(eventoSelecionado.getOcorreu()));
+
+            Calendar d1 = Calendar.getInstance();
+            d1.setTime(eventoSelecionado.getValida());
+
+            Calendar d2 = Calendar.getInstance();
+            d2.setTime(eventoSelecionado.getOcorreu());
+
+            repeteBtn.setChecked(d1.get(Calendar.MONTH) != d2.get(Calendar.MONTH) ? true : false);
+
+            if(repeteBtn.isChecked()){
+                mesesRepeteSpi.setEnabled(true);
+
+                //diferença mes de cadastro e mes de validade
+               mesesRepeteSpi.setSelection(d1.get(Calendar.MONTH) - d2.get(Calendar.MONTH) - 1);
+            }
+
+        }
+
+    }
+
+    private void  updateEvento(){
+        eventoSelecionado.setNome(nomeTxt.getText().toString());
+        eventoSelecionado.setValor(Double.parseDouble(valorTxt.getText().toString()));
+
+        if(acao == 3){
+            eventoSelecionado.setValor(eventoSelecionado.getValor() * -1);
+        }
+       eventoSelecionado.setOcorreu( calendarioTemp.getTime());
+
+        // um novo calendario para calcular data limite(repeticao)
+        Calendar dataLimite = Calendar.getInstance();
+        dataLimite.setTime(calendarioTemp.getTime());
+        dataLimite.set(Calendar.DAY_OF_MONTH, dataLimite.getActualMaximum(Calendar.DAY_OF_MONTH));
+
+        //verificando se este evento ira repetir por alguns meses
+        if(repeteBtn.isChecked()){
+            String mesStr = (String)mesesRepeteSpi.getSelectedItem();
+
+            dataLimite.add(Calendar.MONTH, Integer.parseInt(mesStr));
+
+        }
+        //setando para o ultimo dia do mes limite
+        dataLimite.set(Calendar.DAY_OF_MONTH, dataLimite.getActualMaximum(Calendar.DAY_OF_MONTH));
+
+        eventoSelecionado.setValida(dataLimite.getTime());
+
+        EventosDB db = new EventosDB(CadastroEdicaoEventos.this);
+        db.updateEvento(eventoSelecionado);
+        finish();
+    }
+
     private void cadastrarNovoEvento(){
 
         String nome = nomeTxt.getText().toString();
@@ -179,7 +265,7 @@ public class CadastroEdicaoEventos extends AppCompatActivity {
             // um novo calendario para calcular data limite(repeticao)
             Calendar dataLimite = Calendar.getInstance();
             dataLimite.setTime(calendarioTemp.getTime());
-        dataLimite.set(Calendar.DAY_OF_MONTH, dataLimite.getActualMaximum(Calendar.DAY_OF_MONTH));
+            dataLimite.set(Calendar.DAY_OF_MONTH, dataLimite.getActualMaximum(Calendar.DAY_OF_MONTH));
 
             //verificando se este evento ira repetir por alguns meses
             if(repeteBtn.isChecked()){
@@ -189,7 +275,7 @@ public class CadastroEdicaoEventos extends AppCompatActivity {
 
             }
             //setando para o ultimo dia do mes limite
-            //dataLimite.set(Calendar.DAY_OF_MONTH, dataLimite.getActualMaximum(Calendar.DAY_OF_MONTH));
+            dataLimite.set(Calendar.DAY_OF_MONTH, dataLimite.getActualMaximum(Calendar.DAY_OF_MONTH));
 
             Evento novoEvento = new Evento (nome, valor, new Date(), dataLimite.getTime(), diaEvento, null);
 
