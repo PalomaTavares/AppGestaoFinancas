@@ -1,5 +1,5 @@
 package com.ifmg.carteiramensal;
-//Paloma Tavares e Rebeka Góes
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -17,8 +17,23 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 import ferramentas.EventosDB;
 import modelo.Evento;
@@ -74,11 +89,12 @@ public class MainActivity extends AppCompatActivity {
     private void configuraPermissoes(){
         if (ContextCompat.checkSelfPermission(getBaseContext(), Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED
                 || ContextCompat.checkSelfPermission(getBaseContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED
-                || ContextCompat.checkSelfPermission(getBaseContext(), Manifest.permission.READ_EXTERNAL_STORAGE)!= PackageManager.PERMISSION_GRANTED){
+                || ContextCompat.checkSelfPermission(getBaseContext(), Manifest.permission.READ_EXTERNAL_STORAGE)!= PackageManager.PERMISSION_GRANTED
+                || ContextCompat.checkSelfPermission(getBaseContext(), Manifest.permission.INTERNET) != PackageManager.PERMISSION_GRANTED){
             ActivityCompat.requestPermissions(MainActivity.this,
                     new String[]{Manifest.permission.CAMERA,
                             Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                            Manifest.permission.READ_EXTERNAL_STORAGE}, 0);
+                            Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.INTERNET}, 0);
         }
     }
 
@@ -151,7 +167,6 @@ public class MainActivity extends AppCompatActivity {
         }
        // dataAPP.add(Calendar.MONTH, ajuste);
 
-
         // aqui temos que realizar uma busca no banco de dados(avaliar se existem meses anteriores cadastrados)
         mostraDataApp();
         atualizaValores();
@@ -160,30 +175,87 @@ public class MainActivity extends AppCompatActivity {
     private void atualizaValores(){
 
         // buscando entradas e saidas cadastradas para este mes no banco de dados
-        EventosDB db = new EventosDB( MainActivity.this);
+        //EventosDB db = new EventosDB( MainActivity.this);
 
-        ArrayList<Evento> saidasLista = db.buscaEventos(1, dataAPP);
-        ArrayList<Evento> entradasLista = db.buscaEventos(0, dataAPP);
+        RequestQueue pilha = Volley.newRequestQueue(this);
 
-        //somando todos os valors dos eventos recuperados em banco
-        double entradaTotal = 0.0;
-        double saidaTotal = 0.0;
-        double saldoTotal = 0.0;
+        String url = GlobalVar.urlServidor+"evento";
 
-        for(int i = 0; i < entradasLista.size(); i++){
-            entradaTotal += entradasLista.get(i).getValor();
-        }
+        StringRequest requisicao = new StringRequest(Request.Method.POST, url, new Response.Listener<String>() {
+            @Override
+            public void onResponse(String response) {
+                try {
+                    JSONObject resposta = new JSONObject(response);
 
-        for(int i = 0; i < saidasLista.size(); i++){
-            saidaTotal += saidasLista.get(i).getValor();
-        }
+                    if (resposta.getInt("cod") == 200) {
 
-        //mostrando os valores para o usuario
-        saldoTotal = entradaTotal - saidaTotal;
+                        JSONArray eventosJson = resposta.getJSONArray("informacao");
 
-        entrada.setText(String.format("%.2f",entradaTotal));
-        saida.setText(String.format("%.2f",saidaTotal ));
-        saldo.setText(String.format("%.2f", saldoTotal ));
+                        ArrayList<Evento> saidasLista = new ArrayList<>();
+                        ArrayList<Evento> entradasLista = new ArrayList<>();
+
+                        //percorrendo a lista eventos JSON  e transformando-os para evento em JAVA, classificando os eventos em arrays especificos
+                        for(int i = 0; i < eventosJson.length(); i++){
+                            JSONObject obj = eventosJson.getJSONObject(i);
+                            Evento temp = new Evento(obj.getInt("id"), obj.getString("nome"), obj.getDouble("valor"),
+                                    new Date(obj.getLong("dataCadastro")), new Date(obj.getLong("dataValida")),
+                                    new Date(obj.getLong("dataOcorreu")), obj.getString("urlImagem"));
+                            if(temp.getValor() < 0){
+                                temp.setValor(temp.getValor()*-1);
+                                saidasLista.add(temp);
+                            }else{
+                                entradasLista.add(temp);
+                            }
+                        }
+
+                        //somando todos os valors dos eventos recuperados em banco
+                        double entradaTotal = 0.0;
+                        double saidaTotal = 0.0;
+                        double saldoTotal = 0.0;
+
+                        for(int i = 0; i < entradasLista.size(); i++){
+                            entradaTotal += entradasLista.get(i).getValor();
+                        }
+
+                        for(int i = 0; i < saidasLista.size(); i++){
+                            saidaTotal += saidasLista.get(i).getValor();
+                        }
+
+                        //mostrando os valores para o usuario
+                        saldoTotal = entradaTotal - saidaTotal;
+
+                        entrada.setText(String.format("%.2f",entradaTotal));
+                        saida.setText(String.format("%.2f",saidaTotal ));
+                        saldo.setText(String.format("%.2f", saldoTotal ));;
+
+                    } else {
+                        //algum erro foi retornado pelo servidor
+                        Toast.makeText(MainActivity.this, resposta.getString("informacao"), Toast.LENGTH_LONG).show();
+
+                    }
+                } catch (JSONException e) {
+                    //problema com o formato json
+                    Toast.makeText(MainActivity.this, "Erro no padrão do retorno, contate a equpie de desenvolvimento", Toast.LENGTH_LONG).show();
+                }
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Toast.makeText(MainActivity.this, "Verifique a sua conexão e tente novamente...", Toast.LENGTH_LONG).show();
+            }
+        }){
+            protected Map<String, String> getParams(){
+                Map<String, String> parametros = new HashMap<>();
+                SimpleDateFormat formatador = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                parametros.put("dataConsulta", formatador.format(dataAPP.getTime()));
+                parametros.put("servico", "consulta");
+                parametros.put("idUsuario", GlobalVar.idUsuario+"");
+
+                return parametros;
+            }
+        };
+        pilha.add(requisicao);
+
     }
     protected void  onActivityResult(int codigoRequest, int codigoResultado, Intent data){
         super.onActivityResult(codigoRequest, codigoResultado, data);

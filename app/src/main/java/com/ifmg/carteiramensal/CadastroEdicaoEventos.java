@@ -3,6 +3,7 @@ package com.ifmg.carteiramensal;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.app.DatePickerDialog;
+import android.app.VoiceInteractor;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -20,6 +21,17 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
+import com.google.gson.JsonObject;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -28,6 +40,8 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
 
 
@@ -80,7 +94,7 @@ public class CadastroEdicaoEventos extends AppCompatActivity {
         Intent intencao = getIntent();
          acao = intencao.getIntExtra("acao", -1);
 
-         ajustaPorAcao();
+         ajustaPorAcao();//requisicao criada aqui
          cadastraEventos();
          confSpinners();
     }
@@ -102,6 +116,9 @@ public class CadastroEdicaoEventos extends AppCompatActivity {
 
         //configurando o DatePicker
         calendarioTemp = Calendar.getInstance();
+        /*if(acao >=2 ){
+            calendarioTemp.setTime(eventoSelecionado.getOcorreu());
+        }*/
         calendarioUsuario = new DatePickerDialog(CadastroEdicaoEventos.this, new DatePickerDialog.OnDateSetListener() {
             @Override
             public void onDateSet(DatePicker datePicker, int ano, int mes, int dia) {
@@ -122,7 +139,7 @@ public class CadastroEdicaoEventos extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 if(acao < 2){
-                    cadastrarNovoEvento();
+                   cadastrarNovoEvento();
                 }else{
                     //update do evento
                     updateEvento();
@@ -151,9 +168,10 @@ public class CadastroEdicaoEventos extends AppCompatActivity {
                     finish();
                 }else{
                     //aqui sera chamado o metodo de delete no bd
-                    EventosDB db = new EventosDB(CadastroEdicaoEventos.this);
+                   // EventosDB db = new EventosDB(CadastroEdicaoEventos.this);
                     //db.excluirEventoId(eventoSelecionado.getId());
-                    finish();
+                    //finish();
+                    requestExcluirEvento(eventoSelecionado.getId());
                 }
 
             }
@@ -259,38 +277,74 @@ public class CadastroEdicaoEventos extends AppCompatActivity {
         int id = Integer.parseInt(getIntent().getStringExtra("id"));
 
         if(id != 0){
-            EventosDB db = new EventosDB(CadastroEdicaoEventos.this);
-            eventoSelecionado = db.buscaEventoId(id);
+            RequestQueue fila = Volley.newRequestQueue(this);
 
-            //carregar as informacoes do campos recuperados do banco
-            SimpleDateFormat formatar = new SimpleDateFormat("dd/MM/yyyy");
+            String url = GlobalVar.urlServidor+"evento";
 
-            nomeTxt.setText(eventoSelecionado.getNome());
-            valorTxt.setText(eventoSelecionado.getValor()+"");
-            dataTxt.setText(formatar.format(eventoSelecionado.getOcorreu()));
+            StringRequest requisicao = new StringRequest(Request.Method.POST, url, new Response.Listener<String>() {
+                @Override
+                public void onResponse(String response) {
+                    try {
+                        JSONObject resposta = new JSONObject(response);
+                        if (resposta.getInt("cod") == 200) {
+                            JSONObject obj = resposta.getJSONObject("informacao");
+                            eventoSelecionado = new Evento(obj.getInt("id"), obj.getString("nome"), obj.getDouble("valor"),
+                                    new Date(obj.getLong("dataCadastro")), new Date(obj.getLong("dataValida")),
+                                    new Date(obj.getLong("dataOcorreu")), obj.getString("urlImagem"));
+                            SimpleDateFormat formatar = new SimpleDateFormat("dd/MM/yyyy");
 
-            nomeFoto = eventoSelecionado.getCaminhoFoto();
-            carregarImagem();
+                            nomeTxt.setText(eventoSelecionado.getNome());
+                            valorTxt.setText(eventoSelecionado.getValor() + "");
+                            dataTxt.setText(formatar.format(eventoSelecionado.getOcorreu()));
 
-            Calendar d1 = Calendar.getInstance();
-            d1.setTime(eventoSelecionado.getValida());
+                            nomeFoto = eventoSelecionado.getCaminhoFoto();
+                            carregarImagem();
 
-            Calendar d2 = Calendar.getInstance();
-            d2.setTime(eventoSelecionado.getOcorreu());
+                            Calendar d1 = Calendar.getInstance();
+                            d1.setTime(eventoSelecionado.getValida());
 
-            repeteBtn.setChecked(d1.get(Calendar.MONTH) != d2.get(Calendar.MONTH) ? true : false);
+                            Calendar d2 = Calendar.getInstance();
+                            d2.setTime(eventoSelecionado.getOcorreu());
 
-            if(repeteBtn.isChecked()){
-                mesesRepeteSpi.setEnabled(true);
+                            repeteBtn.setChecked(d1.get(Calendar.MONTH) != d2.get(Calendar.MONTH) ? true : false);
 
-                //diferença mes de cadastro e mes de validade
-               mesesRepeteSpi.setSelection(d1.get(Calendar.MONTH) - d2.get(Calendar.MONTH) - 1);
-            }
-             calendarioTemp = Calendar.getInstance();
-            calendarioTemp.setTime(eventoSelecionado.getOcorreu());
-        }
+                            if (repeteBtn.isChecked()) {
+                                mesesRepeteSpi.setEnabled(true);
+
+                                //diferença mes de cadastro e mes de validade
+                                mesesRepeteSpi.setSelection(d1.get(Calendar.MONTH) - d2.get(Calendar.MONTH) - 1);
+                            }
+                            calendarioTemp = Calendar.getInstance();
+                            calendarioTemp.setTime(eventoSelecionado.getOcorreu());
+                        }else{
+                            Toast.makeText(CadastroEdicaoEventos.this, resposta.getString("informacao"), Toast.LENGTH_LONG).show();
+                        }
+                    } catch (JSONException ex) {
+                        Toast.makeText(CadastroEdicaoEventos.this, "Erro no padrão do retorno, contate a equpie de desenvolvimento", Toast.LENGTH_LONG).show();
+                    }
+
+                }
+            }, new Response.ErrorListener() {
+                @Override
+                public void onErrorResponse(VolleyError error) {
+                    Toast.makeText(CadastroEdicaoEventos.this, "Verifique a sua conexão e tente novamente...", Toast.LENGTH_LONG).show();
+                }
+            }) {
+                protected Map<String, String> getParams() {
+                    Map<String, String> parametros = new HashMap<>();
+                    SimpleDateFormat formatador = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                    parametros.put("servico", "consulta");
+                    parametros.put("idUsuario", GlobalVar.idUsuario + "");
+                    parametros.put("idEvento", id + "");
+
+                    return parametros;
+                }
+            };
+
+            fila.add(requisicao);
+
+         }
     }
-
     private void  updateEvento(){
         eventoSelecionado.setNome(nomeTxt.getText().toString());
         eventoSelecionado.setValor(Double.parseDouble(valorTxt.getText().toString()));
@@ -298,7 +352,7 @@ public class CadastroEdicaoEventos extends AppCompatActivity {
         if(acao == 3){
             eventoSelecionado.setValor(eventoSelecionado.getValor() * -1);
         }
-       eventoSelecionado.setOcorreu( calendarioTemp.getTime());
+        eventoSelecionado.setOcorreu( calendarioTemp.getTime());
 
         // um novo calendario para calcular data limite(repeticao)
         Calendar dataLimite = Calendar.getInstance();
@@ -319,12 +373,193 @@ public class CadastroEdicaoEventos extends AppCompatActivity {
 
         eventoSelecionado.setCaminhoFoto(nomeFoto);
 
-        EventosDB db = new EventosDB(CadastroEdicaoEventos.this);
-        db.updateEvento(eventoSelecionado);
+        requestUpdateEvento(eventoSelecionado);
+
+    }
+
+    private void requestUpdateEvento(Evento ev) {
+        //finish();
+        RequestQueue pilha = Volley.newRequestQueue(this);
+        String url = GlobalVar.urlServidor + "evento";
+
+        StringRequest jsonRequest = new StringRequest(Request.Method.POST, url, new Response.Listener<String>() {
+            //onResponse é executado assim que o servidor entraga o resultado do processamento
+            @Override
+            public void onResponse(String response) {
+                //o parametro response é o resultado enviado do servidor para o app
+
+                try {
+                    JSONObject resposta = new JSONObject(response);
+
+                    //200 indica sucesso
+                    if (resposta.getInt("cod") == 200) {
+                        Toast.makeText(CadastroEdicaoEventos.this, "Atualização feita com sucesso", Toast.LENGTH_LONG).show();
+                        finish();
+                    } else {
+                        //erro...que foi relatado pelo servidor
+                        Toast.makeText(CadastroEdicaoEventos.this, resposta.getString("informacao"), Toast.LENGTH_LONG).show();
+                    }
+
+                } catch (JSONException ex) {
+                    //erro no formato json enviado pelo servidor
+                    Toast.makeText(CadastroEdicaoEventos.this, "Erro no padrão do retorno, contate a equpie de desenvolvimento", Toast.LENGTH_LONG).show();
+                }
+
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                error.printStackTrace();
+                Toast.makeText(CadastroEdicaoEventos.this, "verifique sua conexão e tente novamente...", Toast.LENGTH_LONG).show();
+            }
+        }) {
+            protected Map<String, String> getParams() {
+                Map<String, String> parametros = new HashMap<>();
+                parametros.put("servico", "atualizacao");
+                parametros.put("nome", eventoSelecionado.getNome());
+                parametros.put("valor", eventoSelecionado.getValor()+"");
+                parametros.put("idUsuario", GlobalVar.idUsuario+"");
+                parametros.put("idEvento", eventoSelecionado.getId()+"");
+
+                SimpleDateFormat formatador = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                parametros.put("dataOcorreu", formatador.format(eventoSelecionado.getOcorreu()));
+                parametros.put("dataValida", formatador.format(eventoSelecionado.getValida()));
+
+                return parametros;
+
+            }
+        };
+        //coloca a requisiçao na pilha de execução
+        pilha.add(jsonRequest);
+    }
+
+    private void requestExcluirEvento(long id){
+        String url = GlobalVar.urlServidor+"evento";
+        RequestQueue fila = Volley.newRequestQueue(this);
+        StringRequest requisicao = new StringRequest(Request.Method.POST, url, new Response.Listener<String>() {
+
+            @Override
+            public void onResponse(String response) {
+                try {
+                    JSONObject resposta = new JSONObject(response);
+
+                    //200 indiga sucesso
+                    if (resposta.getInt("cod") == 200) {
+                        Toast.makeText(CadastroEdicaoEventos.this, "Exclusão feita com sucesso", Toast.LENGTH_LONG).show();
+                        finish();
+                    }else{
+                        Toast.makeText(CadastroEdicaoEventos.this, resposta.getString("informacao"), Toast.LENGTH_LONG).show();
+                    }
+                } catch (JSONException ex) {
+                    Toast.makeText(CadastroEdicaoEventos.this, "Erro no padrão do retorno, contate a equpie de desenvolvimento", Toast.LENGTH_LONG).show();
+                }
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Toast.makeText(CadastroEdicaoEventos.this, "Verifique a sua conexão e tente novamente...", Toast.LENGTH_LONG).show();
+            }
+        }){
+            protected Map<String, String> getParams() {
+                Map<String, String> parametros = new HashMap<>();
+                parametros.put("servico", "exclusao");
+                parametros.put("idUsuario", GlobalVar.idUsuario + "");
+                parametros.put("idEvento", id + "");
+                return parametros;
+            }
+        };
+        fila.add(requisicao);
+    }
+
+
+    private void cadastrarNovoEvento() {
+
+        String nome = nomeTxt.getText().toString();
+        double valor = Double.parseDouble(valorTxt.getText().toString());
+
+        if (acao == 1 || acao == 3) {
+            valor *= -1;
+        }
+
+        Date diaEvento = calendarioTemp.getTime();
+
+        // um novo calendario para calcular data limite(repeticao)
+        Calendar dataLimite = Calendar.getInstance();
+        dataLimite.setTime(calendarioTemp.getTime());
+
+        //verificando se este evento ira repetir por alguns meses
+        if (repeteBtn.isChecked()) {
+            String mesStr = (String) mesesRepeteSpi.getSelectedItem();
+
+            dataLimite.add(Calendar.MONTH, Integer.parseInt(mesStr));
+
+        }
+        //setando para o ultimo dia do mes limite
+        dataLimite.set(Calendar.DAY_OF_MONTH, dataLimite.getActualMaximum(Calendar.DAY_OF_MONTH));
+        dataLimite.set(Calendar.HOUR_OF_DAY, dataLimite.getActualMaximum(Calendar.HOUR_OF_DAY));
+        dataLimite.set(Calendar.MINUTE, 59);
+
+        Evento novoEvento = new Evento(nome, valor, new Date(), dataLimite.getTime(), diaEvento, nomeFoto);
+
+        requestCadastroEvento(novoEvento);
+
         finish();
     }
 
-    private void cadastrarNovoEvento(){
+    private void requestCadastroEvento(Evento novo){
+
+        RequestQueue pilha = Volley.newRequestQueue(this);
+        String url = GlobalVar.urlServidor + "evento";
+
+        StringRequest requisicao = new StringRequest(Request.Method.POST, url, new Response.Listener<String>() {
+            @Override
+            public void onResponse(String response) {
+
+                try {
+                    JSONObject resposta = new JSONObject(response);
+
+                    //200 indiga sucesso
+                    if (resposta.getInt("cod") == 200) {
+                        Toast.makeText(CadastroEdicaoEventos.this, resposta.getString("informacao"), Toast.LENGTH_LONG).show();
+
+                    } else {
+                        //erro...que foi relatado pelo servidor
+                        Toast.makeText(CadastroEdicaoEventos.this, resposta.getString("informacao"), Toast.LENGTH_LONG).show();
+                    }
+
+                } catch (JSONException ex) {
+                    //erro no formato json enviado pelo servidor
+                    Toast.makeText(CadastroEdicaoEventos.this, "Erro no padrão do retorno, contate a equpie de desenvolvimento", Toast.LENGTH_LONG).show();
+                }
+
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                error.printStackTrace();
+                Toast.makeText(CadastroEdicaoEventos.this, "verifique sua conexão e tente novamente...", Toast.LENGTH_LONG).show();
+            }
+        }){
+            protected Map<String, String> getParams(){
+                Map<String, String> parametros = new HashMap<>();
+                parametros.put("nome", novo.getNome());
+                parametros.put("valor", novo.getValor()+"");
+                parametros.put("idUsuario",GlobalVar.idUsuario+"");
+                parametros.put("urlImagem",novo.getCaminhoFoto() == null?"null": novo.getCaminhoFoto());
+
+                SimpleDateFormat formatar = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                parametros.put("dataOcorreu", formatar.format(novo.getOcorreu()));
+                parametros.put("dataValida", formatar.format(novo.getValida()));
+                parametros.put("servico", "cadastro");
+
+                return parametros;
+            }
+        };
+        //coloca a requisiçao na pilha de execução
+        pilha.add(requisicao);
+    }
+
+    /* private void cadastrarNovoEvento(){
 
         String nome = nomeTxt.getText().toString();
         double valor = Double.parseDouble(valorTxt.getText().toString());
@@ -367,8 +602,8 @@ public class CadastroEdicaoEventos extends AppCompatActivity {
 
         //}catch (ParseException ex){
           //  System.err.println("erro no formato da data");
-        //}
+        //}*/
 
-    }
+   // }
 
 }
